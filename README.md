@@ -1,0 +1,206 @@
+Audit & Activity Logging Service
+
+## Overview
+
+This project is a **standalone Audit & Activity Logging Service** built using **Node.js, Express, MongoDB, and Redis (Upstash)**.
+
+The service records **immutable audit events** that describe *what happened in the system*, without enforcing business logic or blocking core workflows. It is designed to be **business-agnostic**, **append-only**, and **investigation-friendly**.
+
+This project focuses on backend fundamentals that are often ignored in beginner projects:
+
+- observability  
+- traceability  
+- immutability  
+- system boundaries  
+- real-world query patterns  
+- asynchronous decoupling  
+
+---
+
+## Why this project exists
+
+Most beginner backend projects stop at CRUD.
+
+In real systems, teams must answer questions like:
+
+- Who changed this data?
+- What exactly was modified?
+- When did it happen?
+- Can we reconstruct the sequence of events?
+- Can we trust the history?
+
+This service exists to **solve those problems as a first-class concern**, independent of any specific business domain.
+
+---
+
+## Core Design Principles
+
+### Append-only
+Audit events are never updated or deleted. History is additive.
+
+### Business-agnostic
+The service records facts, not business decisions.
+
+### Non-blocking by design
+Audit logging must not break or slow down business workflows.
+
+### Immutable data model
+Corrections are handled via new events, not mutations.
+
+### Investigation-oriented reads
+Optimized for tracing and debugging, not analytics or reporting.
+
+---
+
+## What this service does
+
+### Write path (Phase 1)
+- Accepts audit events via an internal HTTP API
+- Validates required structure
+- Persists events immutably
+- Owns timestamps and schema versioning
+
+### Asynchronous ingestion (Phase 2)
+- Business services push audit events to **Redis (Upstash)**
+- Audit service consumes events asynchronously
+- Database writes happen outside the request lifecycle
+- HTTP write API is retained as a fallback and for testing
+
+### Read path
+- Read-only APIs for investigation
+- Supports filtering by:
+  - actor
+  - action
+  - resource
+  - time range
+- Cursor-based pagination for scalability
+
+---
+
+## What this service deliberately does NOT do
+
+❌ Enforce business rules  
+❌ Make authorization decisions  
+❌ Provide dashboards or UI  
+❌ Perform analytics or reporting  
+❌ Block upstream systems  
+
+Those responsibilities belong elsewhere.
+
+---
+
+## Audit Event Model (Conceptual)
+
+Each audit event represents a **single factual occurrence** and answers:
+
+- Who performed the action
+- What action occurred
+- On what resource
+- When it happened
+- In what context
+- What changed (if applicable)
+
+Supported actor types:
+- user
+- system
+- background job
+
+Changes are stored as **diffs (before → after)**, not full snapshots.
+
+---
+
+## Technology Stack
+
+- Node.js
+- Express
+- MongoDB Atlas (M0 tier)
+- Mongoose
+- Redis (Upstash)
+- ioredis
+
+The database is designed to grow indefinitely, with indexing aligned to real query patterns.
+
+---
+
+## Implemented Features
+
+### Phase 1 — Core Audit Service
+- Dedicated audit service (separate from business services)
+- Canonical audit event schema
+- Append-only persistence model
+- Write API (`POST /audit/events`)
+- Read API (`GET /audit/events`)
+- Filtering by actor, action, resource, and time
+- Cursor-based pagination
+- Query-aligned MongoDB indexes
+- Health check endpoint
+- Clean Git history
+
+### Phase 2 — Asynchronous Ingestion
+- Redis-based async ingestion (Upstash)
+- Blocking consumer using `BRPOP`
+- Decoupled write path (non-blocking to producers)
+- Reuse of the same audit event contract
+- Small producer example demonstrating integration
+
+---
+
+## Example Use Cases
+
+- Tracking inventory changes
+- Auditing background job execution
+- Recording authentication events
+- Debugging production incidents
+- Compliance and accountability workflows
+
+---
+
+## Project Structure
+
+src/
+├── app.js
+├── server.js
+├── config/
+│ ├── db.js
+│ └── redis.js
+├── models/
+│ └── AuditEvent.js
+├── routes/
+│ ├── health.routes.js
+│ └── audit.routes.js
+├── consumers/
+│ └── auditConsumer.js
+└── utils/
+
+producer-example/
+└── sendAuditEvent.js
+
+yaml
+Copy code
+
+---
+
+## Future Enhancements
+
+- Retry & dead-letter handling
+- Idempotency safeguards
+- Service-to-service authentication
+- Rate limiting
+- Tamper-evident hashing
+- Metrics and operational observability
+
+These are intentionally deferred to avoid premature complexity.
+
+---
+
+## Learning Outcomes
+
+This project demonstrates understanding of:
+
+- Backend service boundaries
+- Observability and traceability
+- Immutable data modeling
+- Async system design
+- Failure isolation
+- Scalable query patterns
+- Incremental backend architecture
