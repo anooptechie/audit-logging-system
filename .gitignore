@@ -1,0 +1,3 @@
+nodemodules/
+.env
+npm-debug.log
