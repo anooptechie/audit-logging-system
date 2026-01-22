@@ -24,4 +24,14 @@ router.get("/metrics", (req, res) => {
   });
 });
 
+router.get("/consumer", (req, res) => {
+  res.json({
+    status: "ok",
+    consumerStartedAt: metrics.consumerStartedAt,
+    lastHeartbeatAt: metrics.lastHeartbeatAt,
+    lastEventProcessedAt: metrics.lastEventProcessedAt
+  });
+});
+
+
 module.exports = router

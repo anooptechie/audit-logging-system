@@ -1,5 +1,6 @@
 const consumerMetrics = {
   consumerStartedAt: new Date(),
+  lastHeartbeatAt: null,
   lastEventProcessedAt: null,
 
   eventsProcessed: 0,

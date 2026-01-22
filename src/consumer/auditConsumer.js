@@ -74,6 +74,9 @@ async function pushToDLQ(eventData, error) {
 
 async function startAuditConsumer() {
   console.log("Audit Consumer Started");
+  setInterval(() => {
+    metrics.lastHeartbeatAt = new Date();
+  }, 5000);
 
   while (true) {
     let eventData;
