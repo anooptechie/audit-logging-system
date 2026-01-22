@@ -14,10 +14,14 @@ async function startAuditConsumer() {
       const eventData = JSON.parse(payload);
 
       const auditEvent = new AuditEvent(eventData);
-      await auditEvent.save()
+      await auditEvent.save();
 
       console.log("Audit Event Consumed and Saved");
     } catch (err) {
+      if (err.code === 11000) {
+        console.warn("Duplicate audit event ignored (idempotency hit)");
+        continue;
+      }
       console.error("Audit consumer error", err);
     }
   }

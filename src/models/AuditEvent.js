@@ -4,39 +4,39 @@ const ActorSchema = new mongoose.Schema(
   {
     actorId: {
       type: String,
-      required: true
+      required: true,
     },
     actorType: {
       type: String,
       enum: ["user", "system", "job"],
-      required: true
+      required: true,
     },
     role: {
-      type: String
-    }
+      type: String,
+    },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const ActionSchema = new mongoose.Schema(
   {
     verb: {
       type: String,
-      required: true
+      required: true,
     },
     type: {
       type: String,
-      required: true
+      required: true,
     },
     resourceType: {
       type: String,
-      required: true
+      required: true,
     },
     resourceId: {
-      type: String
-    }
+      type: String,
+    },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const ContextSchema = new mongoose.Schema(
@@ -44,48 +44,54 @@ const ContextSchema = new mongoose.Schema(
     requestId: String,
     jobId: String,
     ip: String,
-    userAgent: String
+    userAgent: String,
   },
-  { _id: false }
+  { _id: false },
 );
 
 const AuditEventSchema = new mongoose.Schema(
   {
+    idempotencyKey: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+
     schemaVersion: {
       type: Number,
-      default: 1
+      default: 1,
     },
 
     actor: {
       type: ActorSchema,
-      required: true
+      required: true,
     },
 
     action: {
       type: ActionSchema,
-      required: true
+      required: true,
     },
 
     changes: {
-      type: Object
+      type: Object,
     },
 
     context: {
-      type: ContextSchema
+      type: ContextSchema,
     },
 
     metadata: {
-      type: Object
+      type: Object,
     },
 
     timestamp: {
       type: Date,
-      default: () => new Date()
-    }
+      default: () => new Date(),
+    },
   },
   {
-    versionKey: false
-  }
+    versionKey: false,
+  },
 );
 
 // Time-based queries
@@ -101,5 +107,8 @@ AuditEventSchema.index({ "action.type": 1, "action.resourceType": 1 });
 
 // Cursor-based pagination (already indexed by default, but explicit is fine)
 // AuditEventSchema.index({ _id: -1 });
+
+AuditEventSchema.index({ idempotencyKey: 1 }, { unique: true });
+
 
 module.exports = mongoose.model("AuditEvent", AuditEventSchema);
