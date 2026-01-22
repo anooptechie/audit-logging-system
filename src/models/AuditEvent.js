@@ -108,7 +108,7 @@ AuditEventSchema.index({ "action.type": 1, "action.resourceType": 1 });
 // Cursor-based pagination (already indexed by default, but explicit is fine)
 // AuditEventSchema.index({ _id: -1 });
 
-AuditEventSchema.index({ idempotencyKey: 1 }, { unique: true });
+// AuditEventSchema.index({ idempotencyKey: 1 }, { unique: true });
 
 
 module.exports = mongoose.model("AuditEvent", AuditEventSchema);
