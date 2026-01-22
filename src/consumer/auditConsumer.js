@@ -1,5 +1,6 @@
 const redis = require("../config/redis");
 const AuditEvent = require("../models/AuditEvent");
+const metrics = require("../metrics/consumerMetrics");
 
 const QUEUE_KEY = "audit_events";
 const DLQ_KEY = "audit_events_dlq";
@@ -20,11 +21,17 @@ async function saveWithRetry(eventData) {
       // throw new Error("Simulated DB failure");
 
       await auditEvent.save();
+
+      metrics.eventsProcessed += 1;
+      metrics.lastEventProcessedAt = new Date();
+
       console.log("Audit event saved");
       return;
     } catch (err) {
+      console.log("Retry attempt:", attempt);
       // Duplicate → expected, stop immediately
       if (err.code === 11000) {
+        metrics.duplicatesIgnored += 1;
         console.warn("Duplicate audit event ignored (idempotency hit)");
         return;
       }
@@ -37,8 +44,9 @@ async function saveWithRetry(eventData) {
 
       // Retryable error
       if (attempt < MAX_RETRIES) {
+        metrics.retryAttempts += 1;
         console.warn(
-          `Audit save failed (attempt ${attempt}/${MAX_RETRIES}), retrying...`
+          `Audit save failed (attempt ${attempt}/${MAX_RETRIES}), retrying...`,
         );
         await delay(RETRY_DELAY_MS);
       } else {
@@ -54,12 +62,13 @@ async function pushToDLQ(eventData, error) {
     event: eventData,
     error: {
       message: error.message,
-      stack: error.stack
+      stack: error.stack,
     },
-    failedAt: new Date().toISOString()
+    failedAt: new Date().toISOString(),
   };
 
   await redis.lpush(DLQ_KEY, JSON.stringify(dlqPayload));
+  metrics.dlqEvents += 1;
   console.error("Audit event moved to DLQ");
 }
 

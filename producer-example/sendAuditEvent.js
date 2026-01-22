@@ -7,7 +7,7 @@ const QUEUE_KEY = "audit_events";
 
 async function sendAuditEvent() {
   const auditEvent = {
-    idempotencyKey: "inventory-update-item-789-req-016",
+    idempotencyKey: "inventory-update-item-789-req-021",
     actor: {
       actorId: "user-997",
       actorType: "user",

@@ -28,18 +28,44 @@ This project treats auditing as a **first-class backend system**, not an afterth
 ## Architectural Evolution
 
 ### Phase 1
+
 Focused on correctness and clarity:
+
 - immutable event modeling
 - append-only storage
 - investigative read APIs
 - strict service boundaries
 
 ### Phase 2
+
 Introduced system-level thinking:
+
 - asynchronous ingestion via Redis (Upstash)
 - decoupling audit writes from request lifecycle
 - producer–consumer model
 - failure isolation
+
+## Phase 3 — Reliability & Hardening
+
+Phase 3 was introduced to make the audit system safe under real-world asynchronous failures.
+
+The focus was on correctness rather than feature expansion.
+
+Key reliability guarantees added:
+
+- **Idempotency**
+  Duplicate message delivery is expected in async systems.
+  A unique idempotency key ensures audit events are recorded exactly once.
+
+- **Bounded Retries**
+  Transient persistence failures are retried a limited number of times.
+  This balances reliability with system stability.
+
+- **Dead-Letter Queue**
+  Events that fail after retries are moved to a DLQ instead of being dropped.
+  This preserves audit history and enables later inspection or reprocessing.
+
+This phase demonstrates system-level thinking around failure handling, data integrity, and operational safety.
 
 Each phase was implemented deliberately without overengineering.
 
@@ -81,6 +107,7 @@ Not based on:
 This service is designed to **grow with systems**, not impress with shortcuts.
 
 It prioritizes:
+
 - correctness over cleverness
 - clarity over completeness
 - fundamentals over frameworks
